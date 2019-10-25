@@ -81,7 +81,10 @@ server = function(input, output, session){
     datatable(DT,
               #editable = list(target="cell",disable = list(columns = c(1:9))),
               rownames=F, 
-              selection = "single",escape=F) 
+              selection = "single",escape=F,
+              options = list(
+                columnDefs = list(list(className = 'dt-center', targets = 2:(length(vals_fish$Data)-1))))
+    )
   })
   
   observeEvent(input$Add_row_head, {
