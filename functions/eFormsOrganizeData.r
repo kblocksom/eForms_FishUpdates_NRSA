@@ -16,7 +16,7 @@ eFormsOrganize <- function(rawData){
   
   # bind with visit info and create list 
   # in process for later use
-  ss <- cbind(visitinfo, rr)
+  ss <- as.data.table(cbind(visitinfo, rr))
   
   return(ss)
 }
