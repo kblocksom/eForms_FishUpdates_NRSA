@@ -110,7 +110,7 @@ server = function(input, output, session){
       COUNT_19=as.character(input[[paste0("Count19_add", input$Add_row_head)]]),
       newEmptyCol, 
       stringsAsFactors=F)
-    vals_fish$Data<-rbind(vals_fish$Data,new_row) # NOT WORKING - TAKES OTHER VALUES FROM PREVIOUS ROW
+    vals_fish$Data<-rbind(vals_fish$Data,new_row,fill=TRUE) 
     removeModal()
   })
   
@@ -187,7 +187,6 @@ server = function(input, output, session){
       else 
         row_change[[i]]<-paste0('<input class="new_input" value= ','"',old_row[[i]],'"',' type="textarea"  id=new_',i,'><br>')
     }
-   # row_change.full <- data.frame(old_row[,names(old_row) %nin% varList],row_change,stringsAsFactors=F)
     row_change <- as.data.table(row_change)
     setnames(row_change,colnames(old_row))
     DT <- as.data.table(cbind(vals_fish$Data[selected_row,1:10],row_change,stringsAsFactors=F))
