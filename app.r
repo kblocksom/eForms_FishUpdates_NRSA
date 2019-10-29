@@ -96,14 +96,10 @@ server = function(input, output, session){
     newLINE <- max(as.numeric(vals_fish$Data$LINE)) + 1
     numCol <- length(vals_fish$Data) - 17
     newEmptyCol <- setNames(data.frame(matrix(data='', ncol = numCol, nrow = 1)), names(vals_fish$Data)[18:length(names(vals_fish$Data))])
-    # newEmptyCol <- as.data.table(vals_fish$Data[-1,18:(length(vals_fish$Data))]) 
-    
-    print(newEmptyCol)
+
     new_row=data.table(unique(data.frame(vals_fish$Data[,1:9])),
                        LINE=as.character(newLINE),
       NAME_COM=toupper(as.character(input[[paste0("Name_add", input$Add_row_head)]])),
-      INTRODUCED='',
-      HYBRID='',
       COUNT_6=as.character(input[[paste0("Count6_add", input$Add_row_head)]]),
       COUNT_12=as.character(input[[paste0("Count12_add", input$Add_row_head)]]),
       COUNT_18=as.character(input[[paste0("Count18_add", input$Add_row_head)]]),
@@ -121,7 +117,7 @@ server = function(input, output, session){
       if(length(input$Main_table_fish_rows_selected)>=1 ){
         modalDialog(
           title = "Warning",
-          paste("Are you sure you want to delete",length(input$Main_table_fish_rows_selected),"rows?" ),
+          paste("Are you sure you want to delete",length(input$Main_table_fish_rows_selected),"rows? Note that row will still exist but be blank for updating purposes." ),
           footer = tagList(
             modalButton("Cancel"),
             actionButton("ok", "Yes")
@@ -138,7 +134,9 @@ server = function(input, output, session){
   
   ### If user say OK, then delete the selected rows
   observeEvent(input$ok, {
-    vals_fish$Data=vals_fish$Data[-input$Main_table_fish_rows_selected,]
+    vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)] <- lapply(vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)],
+                                                                                          function(x){x=' '}) 
+    #vals_fish$Data=vals_fish$Data[-input$Main_table_fish_rows_selected,]
     removeModal()
   })
   
@@ -217,7 +215,7 @@ server = function(input, output, session){
                                              subset(NAME_COM!='' & !is.na(NAME_COM)) %>%
                                              melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
                                              subset(value!='' & value!='NA') %>%
-                                             mutate(variable=paste(LINE,variable,sep='_')) %>%
+                                             mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value==' ','',value)) %>%
                                              subset(select=-LINE) %>%
                                              dcast(UID+SITE_ID+VISIT_NO+YEAR+STUDYNAME+APP_PLATFORM+APP_VERSION+SAMPLE_TYPE~variable, value.var='value') %>%
                                              subset(select=-SAMPLE_TYPE)
