@@ -86,7 +86,7 @@ server = function(input, output, session){
                           textInput(paste0("Count12_add", input$Add_row_head), "Count 6-12in length"),
                           textInput(paste0("Count18_add", input$Add_row_head), "Count 12-18in length"),  
                           textInput(paste0("Count19_add", input$Add_row_head), "Count > 18in length"),
-                          
+                          modalButton("Cancel"),
                           actionButton("go", "Add row"),
                           easyClose = TRUE, footer = NULL ))
     
