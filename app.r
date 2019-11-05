@@ -91,7 +91,7 @@ server = function(input, output, session){
                           easyClose = TRUE, footer = NULL ))
     
   })
-  ### Add a new row to DT  
+  ### Add a new row to DT  - REORDER COLUMNS IF A PARTICULAR COUNT COLUMN NOT IN CURRENT DATA?
   observeEvent(input$go, {
     newLINE <- max(as.numeric(vals_fish$Data$LINE)) + 1
     numCol <- length(vals_fish$Data) - 17
@@ -166,6 +166,7 @@ server = function(input, output, session){
   }
   
           )
+    
     })
   
   
@@ -185,10 +186,11 @@ server = function(input, output, session){
       else 
         row_change[[i]]<-paste0('<input class="new_input" value= ','"',old_row[[i]],'"',' type="textarea"  id=new_',i,'><br>')
     }
+    
     row_change <- as.data.table(row_change)
     setnames(row_change,colnames(old_row))
-    DT <- as.data.table(cbind(vals_fish$Data[selected_row,1:10],row_change,stringsAsFactors=F))
-    DT 
+    DT <- cbind(as.data.table(vals_fish$Data[selected_row,1:10]),row_change,stringsAsFactors=F)
+    DT
   },escape=F,options=list(dom='t',ordering=F,scrollX = TRUE),selection="none")
 
   
@@ -196,7 +198,7 @@ server = function(input, output, session){
   ### This is to replace the modified row to existing row
   observeEvent(input$newValue,
                {
-                 newValue <- lapply(input$newValue,function(col){ toupper(as.character(col))})
+                 newValue <- lapply(input$newValue,function(col){ ifelse(col=='', ' ',ifelse(col=='NA','',col))})
                  DF=as.data.table(data.frame(lapply(newValue, function(x) t(data.frame(x)))))
                  DF=data.table(vals_fish$Data[input$Main_table_fish_rows_selected,1:10],DF,stringsAsFactors=F)
                  colnames(DF)=colnames(vals_fish$Data)
@@ -212,10 +214,11 @@ server = function(input, output, session){
   output$downloadJSON <- downloadHandler(filename = function(){paste(str_extract(input$filenm$name,"[:alnum:]+\\_[:alpha:]+\\_[:alnum:]+\\_[:alnum:]\\_FISH"), ".json", sep="")},
                                          content = function(file) {
                                            updData.wide <- subset(vals_fish$Data, select=-PAGE) %>%
-                                             subset(NAME_COM!='' & !is.na(NAME_COM)) %>%
+                                             # subset(NAME_COM!='' & !is.na(NAME_COM)) %>% # Do not need to explicitly remove these because we cannot completely remove data
                                              melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
                                              subset(value!='' & value!='NA') %>%
-                                             mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value==' ','',value)) %>%
+                                             mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value %in% c(' '),'',value)) %>%
+                                             mutate(value=ifelse(str_detect(variable,'NAME_COM|INTRODUCED|HYBRID'),toupper(value),value)) %>%
                                              subset(select=-LINE) %>%
                                              dcast(UID+SITE_ID+VISIT_NO+YEAR+STUDYNAME+APP_PLATFORM+APP_VERSION+SAMPLE_TYPE~variable, value.var='value') %>%
                                              subset(select=-SAMPLE_TYPE)
