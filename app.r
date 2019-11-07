@@ -7,30 +7,35 @@ source("global.r")
 useShinyalert()
 
 # Define UI for application that draws a histogram
-ui = fluidPage(
+ui = fluidPage(theme = shinytheme("sandstone"),
   
   # Application title
   titlePanel("NRSA Fish Collection Data Update Tool (v. 1.0)"),
   shinyjs::useShinyjs(),
 
-  p('The NRSA Fish Collection Data Update Tool allows crews to upload the .JSON file containing fish 
+  fluidRow(column(8, p('The NRSA Fish Collection Data Update Tool allows crews to upload the .JSON file containing fish 
            collection data as submitted to NARS IM. They can then update the data (names and counts, including 
            adding or deleting rows) and download an updated file (of the same name) in JSON format that can be submitted to 
            NARS IM. This process replaces use of fillable PDFs for fish collection data updates for 
-           those crews. Please direct all questions related to tool troubleshooting and feature requests to
-           Karen Blocksom (Blocksom.Karen@epa.gov).'),
+           those crews. To maintain the original data as a reference, save the original files in one folder, 
+           updated files in another.Please direct all questions related to tool troubleshooting and feature requests to
+           Karen Blocksom (Blocksom.Karen@epa.gov).')),
   br(),
-  
+  column(8, p()),
   ### tags$head() is to customize the download button
   tags$head(tags$style(".butt{background-color:#230682;} .butt{color: #e6ebef;}")),
-  fileInput(inputId='filenm', buttonLabel='Browse...', label='Please select a _FISH.JSON file to edit',
-            multiple=FALSE, accept=c('json','JSON')), 
+  column(8, fileInput(inputId='filenm', buttonLabel='Browse for JSON file...', label='Please select a _FISH.JSON file to edit',
+            multiple=FALSE, accept=c('json','JSON'))), 
+  br(),
   
-  helpText('Note: To discard changes and start over, reload file before saving to JSON file.'),
-  downloadButton("downloadJSON", "Save Updated Results to .JSON", class="butt"),
+  column(8, helpText('Note: To discard changes and start over, reload file before saving to JSON file.')),
+  column(8, downloadButton("downloadJSON", "Save Updated Results to .JSON", class="butt")),
+  column(8, p()),
+  column(6, p(strong("*To submit updated data to NARS IM, save using the same filename as the original file. Then, email the updated JSON file 
+    to NARSFieldData@epa.gov with the subject line 'NRSA1819 submission'."))),
   useShinyalert(), # Set up shinyalert
   uiOutput("MainBody_fish")
-)
+))
 
 server = function(input, output, session){
   
