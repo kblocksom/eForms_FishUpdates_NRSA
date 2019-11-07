@@ -48,7 +48,8 @@ organizeFish <- function(parsedIn){
   # stack aa and bb on top of one another
   cc <- bb
   # cast into wide format for review
-  cc.wide <- dcast(cc,SAMPLE_TYPE+PAGE+LINE~PARAMETER,value.var='RESULT') 
+  cc.wide <- dcast(cc,SAMPLE_TYPE+PAGE+LINE~PARAMETER,value.var='RESULT') %>%
+    arrange(PAGE,as.numeric(LINE))
   
   nameList <- data.frame(varName=c('SAMPLE_TYPE','PAGE','LINE','NAME_COM','INTRODUCED','HYBRID','COUNT_6','COUNT_12','COUNT_18','COUNT_19','ANOM_COUNT','MORT_CT','VOUCH_UNK','VOUCH_QA','VOUCH_PHOTO','VOUCH_NUM','SEQUENCE','TAG','FISH_COMMENT','PHOTO_COMMENT'), varOrder=seq(1,20),stringsAsFactors = F)
   
