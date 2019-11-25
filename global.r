@@ -7,5 +7,5 @@ source('functions/eFormsParseJSON_basic.r')
 source('functions/eFormsParseJSONtext.r') 
 source('functions/eFormsOrganizeData.r')
 source('functions/parseFish.R')
-# fishTaxa <- readRDS("data/fishtaxa.rds") %>%
-#   mutate(FINAL_NAME=as.factor(FINAL_NAME))
+fishTaxa <- readRDS("data/fishtaxa.rds") %>%
+  mutate(FINAL_NAME=as.factor(FINAL_NAME))

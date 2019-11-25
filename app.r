@@ -10,7 +10,7 @@ useShinyalert()
 ui = fluidPage(theme = shinytheme("sandstone"),
   
   # Application title
-  titlePanel("NRSA Fish Collection Data Update Tool (v. 1.0)"),
+  titlePanel("NRSA Fish Collection Data Update Tool (v. 1.1)"),
   shinyjs::useShinyjs(),
 
   fluidRow(column(8, p('The NRSA Fish Collection Data Update Tool allows crews to upload the .JSON file containing fish 
@@ -24,8 +24,9 @@ ui = fluidPage(theme = shinytheme("sandstone"),
   column(8, p()),
   ### tags$head() is to customize the download button
   tags$head(tags$style(".butt{background-color:#230682;} .butt{color: #e6ebef;}")),
-  column(8, fileInput(inputId='filenm', buttonLabel='Browse for JSON file...', label='Please select a _FISH.JSON file to edit',
+  column(6, fileInput(inputId='filenm', buttonLabel='Browse for JSON file...', label='Please select a _FISH.JSON file to edit',
             multiple=FALSE, accept=c('json','JSON'))), 
+  column(6, selectInput(inputId='fishlist', label='Search for fish species names in NRSA taxa list', multiple=FALSE, choices=fishTaxa$FINAL_NAME)),
   br(),
   
   column(8, helpText('Note: To discard changes and start over, reload file before saving to JSON file.')),
@@ -75,7 +76,14 @@ server = function(input, output, session){
   #### render DataTable part ####
   output$Main_table_fish<-renderDataTable({
     DT=vals_fish$Data
-    datatable(DT,
+    
+    fishColNames <- names(vals_fish$Data) 
+    fishColNames[fishColNames=='COUNT_6'] <- 'COUNT <150mm'
+    fishColNames[fishColNames=='COUNT_12'] <- 'COUNT 150-300mm'
+    fishColNames[fishColNames=='COUNT_18'] <- 'COUNT 300-460mm'
+    fishColNames[fishColNames=='COUNT_19'] <- 'COUNT >460mm'
+    
+    datatable(DT,colnames=fishColNames,
               rownames=F, 
               selection = "single",escape=F,
               options = list(
@@ -87,10 +95,10 @@ server = function(input, output, session){
     ### This is the pop up board for input a new row
     showModal(modalDialog(title = "Add a new row",
                           textInput(paste0("Name_add", input$Add_row_head), "Fish Species"),
-                          textInput(paste0("Count6_add", input$Add_row_head), "Count < 6in length"),
-                          textInput(paste0("Count12_add", input$Add_row_head), "Count 6-12in length"),
-                          textInput(paste0("Count18_add", input$Add_row_head), "Count 12-18in length"),  
-                          textInput(paste0("Count19_add", input$Add_row_head), "Count > 18in length"),
+                          textInput(paste0("Count6_add", input$Add_row_head), "Count < 150mm length"),
+                          textInput(paste0("Count12_add", input$Add_row_head), "Count 150-300mm length"),
+                          textInput(paste0("Count18_add", input$Add_row_head), "Count 300-460mm length"),  
+                          textInput(paste0("Count19_add", input$Add_row_head), "Count > 460mm length"),
                           modalButton("Cancel"),
                           actionButton("go", "Add row"),
                           easyClose = TRUE, footer = NULL ))
