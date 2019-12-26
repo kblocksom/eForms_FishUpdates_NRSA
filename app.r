@@ -10,7 +10,7 @@ useShinyalert()
 ui = fluidPage(theme = shinytheme("sandstone"),
   
   # Application title
-  titlePanel("NRSA Fish Collection Data Update Tool (v. 1.1)"),
+  titlePanel("NRSA Fish Collection Data Update Tool (v. 1.2)"),
   shinyjs::useShinyjs(),
 
   fluidRow(column(8, p('The NRSA Fish Collection Data Update Tool allows crews to upload the .JSON file containing fish 
