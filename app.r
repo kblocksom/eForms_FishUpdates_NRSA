@@ -108,8 +108,9 @@ server = function(input, output, session){
   observeEvent(input$go, {
     newLINE <- max(as.numeric(vals_fish$Data$LINE)) + 1
     numCol <- length(vals_fish$Data) - 17
-    newEmptyCol <- setNames(data.frame(matrix(data='', ncol = numCol, nrow = 1)), names(vals_fish$Data)[18:length(names(vals_fish$Data))])
 
+#    newEmptyCol <- setNames(data.frame(matrix(data='', ncol = numCol, nrow = 1)), names(vals_fish$Data)[18:length(names(vals_fish$Data))])
+#    print(newEmptyCol)
     new_row=data.table(unique(data.frame(vals_fish$Data[,1:9])),
                        LINE=as.character(newLINE),
       NAME_COM=toupper(as.character(input[[paste0("Name_add", input$Add_row_head)]])),
@@ -117,9 +118,21 @@ server = function(input, output, session){
       COUNT_12=as.character(input[[paste0("Count12_add", input$Add_row_head)]]),
       COUNT_18=as.character(input[[paste0("Count18_add", input$Add_row_head)]]),
       COUNT_19=as.character(input[[paste0("Count19_add", input$Add_row_head)]]),
-      newEmptyCol, 
+#      newEmptyCol, 
       stringsAsFactors=F)
-    vals_fish$Data<-rbind(vals_fish$Data,new_row,fill=TRUE) 
+    
+    vals_fish$Data <- rbind(vals_fish$Data,new_row,fill=TRUE) 
+
+    nameList <- data.frame(varName=c('NAME_COM','INTRODUCED','HYBRID','COUNT_6','COUNT_12','COUNT_18',
+                                     'COUNT_19','ANOM_COUNT','MORT_CT','VOUCH_UNK','VOUCH_QA','VOUCH_PHOTO','VOUCH_NUM','SEQUENCE','TAG',
+                                     'FISH_COMMENT','PHOTO_COMMENT'), varOrder=seq(1,17),stringsAsFactors = F)
+    subList <- subset(nameList, varName %in% names(vals_fish$Data))
+    subList <- subList[order(subList$varOrder),]
+
+    idList <- c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','PAGE','LINE')
+    
+    vals_fish$Data <- subset(vals_fish$Data, select = c(idList, subList$varName))
+    
     removeModal()
   })
   
@@ -148,8 +161,7 @@ server = function(input, output, session){
   ### If user say OK, then delete the selected rows
   observeEvent(input$ok, {
     vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)] <- lapply(vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)],
-                                                                                          function(x){x=' '}) 
-    #vals_fish$Data=vals_fish$Data[-input$Main_table_fish_rows_selected,]
+                                                                                          function(x){x=' '})
     removeModal()
   })
   
@@ -244,23 +256,12 @@ server = function(input, output, session){
                                            names(upd.wide) <- gsub('value\\.', '', names(upd.wide))
                                            upd.wide$SAMPLE_TYPE <- NULL
                                            
-                                           # updData.wide <- subset(vals_fish$Data, select=-PAGE) %>%
-                                           #   # subset(NAME_COM!='' & !is.na(NAME_COM)) %>% # Do not need to explicitly remove these because we cannot completely remove data
-                                           #   melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
-                                           #   subset(value!='' & value!='NA') %>%
-                                           #   mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value %in% c(' '),'',value)) %>%
-                                           #   mutate(value=ifelse(str_detect(variable,'NAME_COM|INTRODUCED|HYBRID'),toupper(value),value)) %>%
-                                           #   subset(select=-LINE) %>%
-                                           #   dcast(UID+SITE_ID+VISIT_NO+YEAR+STUDYNAME+APP_PLATFORM+APP_VERSION+SAMPLE_TYPE~variable, value.var='value') %>%
-                                           #   subset(select=-SAMPLE_TYPE)
-                                           
                                            formatData <- list(UID=unique(upd.wide$UID),SITE_ID=unique(upd.wide$SITE_ID),
                                                               VISIT_NO=unique(upd.wide$VISIT_NO),YEAR=unique(upd.wide$YEAR),
                                                               STUDYNAME=unique(upd.wide$STUDYNAME),APP_PLATFORM=unique(upd.wide$APP_PLATFORM),
                                                               APP_VERSION=unique(upd.wide$APP_VERSION),FISH=unbox(upd.wide[,8:length(upd.wide)]))
                                            
                                            jsonData <- jsonlite::write_json(formatData,auto_unbox=TRUE,prettify=TRUE,file) 
-                                           
                                            
                                          }
   )
