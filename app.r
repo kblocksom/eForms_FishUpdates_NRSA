@@ -104,7 +104,7 @@ server = function(input, output, session){
                           easyClose = TRUE, footer = NULL ))
     
   })
-  ### Add a new row to DT  - REORDER COLUMNS IF A PARTICULAR COUNT COLUMN NOT IN CURRENT DATA?
+  ### Add a new row to DT  
   observeEvent(input$go, {
     newLINE <- max(as.numeric(vals_fish$Data$LINE)) + 1
     numCol <- length(vals_fish$Data) - 17
@@ -145,11 +145,11 @@ server = function(input, output, session){
     )
   })
   
-  ### If user say OK, then delete the selected rows
+  ## If user say OK, then delete the selected rows
   observeEvent(input$ok, {
     vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)] <- lapply(vals_fish$Data[input$Main_table_fish_rows_selected,11:ncol(vals_fish$Data)],
                                                                                           function(x){x=' '}) 
-    #vals_fish$Data=vals_fish$Data[-input$Main_table_fish_rows_selected,]
+    
     removeModal()
   })
   
@@ -227,7 +227,6 @@ server = function(input, output, session){
   output$downloadJSON <- downloadHandler(filename = function(){paste(str_extract(input$filenm$name,"[:alnum:]+\\_[:alpha:]+\\_[:alnum:]+\\_[:alnum:]\\_FISH"), ".json", sep="")},
                                          content = function(file) {
                                            updData.wide <- subset(vals_fish$Data, select=-PAGE) %>%
-                                             # subset(NAME_COM!='' & !is.na(NAME_COM)) %>% # Do not need to explicitly remove these because we cannot completely remove data
                                              melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
                                              subset(value!='' & value!='NA') %>%
                                              mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value %in% c(' '),'',value)) %>%

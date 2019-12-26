@@ -25,14 +25,7 @@ eFormsOrganize <- function(rawData){
 # This begins the section which organizes the parsed data by sample type
 organizeFish <- function(parsedIn){
   # Start by separating data that describe samples and those that describe species
-  # aa pulls out sample information by SAMPLE_TYPE and sets LINE=0
-  # aa <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:alpha:]')) %>%
-  #   mutate(PAGE='1', LINE='0') %>%
-  #   melt(id.vars=c('PAGE','LINE'), variable.name='PARAMETER', value.name='RESULT') %>%
-  #   mutate(SAMPLE_TYPE=substring(PARAMETER,6,9), 
-  #          PARAMETER=gsub('FISH\\.VERT\\_|FISH\\.FTIS\\_|FISH\\.FPLG\\_|FISH\\.FISH_', '', PARAMETER)) %>%
-  #   select(SAMPLE_TYPE, PAGE, LINE, PARAMETER, RESULT) %>%
-  #   filter(SAMPLE_TYPE=='FISH')
+
   # bb pulls out and formats species by line number and sample type
   bb <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:digit:]')) %>%
     mutate(PAGE='1') %>%
