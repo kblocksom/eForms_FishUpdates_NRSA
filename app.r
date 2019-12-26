@@ -44,13 +44,13 @@ server = function(input, output, session){
   vals_fish<-reactiveValues()
   
   observeEvent(input$filenm, {
-    vals_fish$Data<-organizationShiny(input$filenm$datapath,
+    vals_fish$Data <- organizationShiny(input$filenm$datapath,
                                       input$filenm$name)
   })
   
   
   #### MainBody_trich is the id of DT table
-  output$MainBody_fish<-renderUI({
+  output$MainBody_fish <- renderUI({
     fluidPage(
       hr(),
       column(6,offset = 6,
@@ -74,7 +74,7 @@ server = function(input, output, session){
   
   
   #### render DataTable part ####
-  output$Main_table_fish<-renderDataTable({
+  output$Main_table_fish <- renderDataTable({
     DT=vals_fish$Data
     
     fishColNames <- names(vals_fish$Data) 
@@ -226,20 +226,38 @@ server = function(input, output, session){
   
   output$downloadJSON <- downloadHandler(filename = function(){paste(str_extract(input$filenm$name,"[:alnum:]+\\_[:alpha:]+\\_[:alnum:]+\\_[:alnum:]\\_FISH"), ".json", sep="")},
                                          content = function(file) {
-                                           updData.wide <- subset(vals_fish$Data, select=-PAGE) %>%
-                                             # subset(NAME_COM!='' & !is.na(NAME_COM)) %>% # Do not need to explicitly remove these because we cannot completely remove data
-                                             melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
-                                             subset(value!='' & value!='NA') %>%
-                                             mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value %in% c(' '),'',value)) %>%
-                                             mutate(value=ifelse(str_detect(variable,'NAME_COM|INTRODUCED|HYBRID'),toupper(value),value)) %>%
-                                             subset(select=-LINE) %>%
-                                             dcast(UID+SITE_ID+VISIT_NO+YEAR+STUDYNAME+APP_PLATFORM+APP_VERSION+SAMPLE_TYPE~variable, value.var='value') %>%
-                                             subset(select=-SAMPLE_TYPE)
                                            
-                                           formatData <- list(UID=unique(updData.wide$UID),SITE_ID=unique(updData.wide$SITE_ID),
-                                                              VISIT_NO=unique(updData.wide$VISIT_NO),YEAR=unique(updData.wide$YEAR),
-                                                              STUDYNAME=unique(updData.wide$STUDYNAME),APP_PLATFORM=unique(updData.wide$APP_PLATFORM),
-                                                              APP_VERSION=unique(updData.wide$APP_VERSION),FISH=unbox(updData.wide[,8:length(updData.wide)]))
+                                           upd <- subset(vals_fish$Data, select=-PAGE)
+
+                                           varLong <- names(upd)[names(upd) %nin% c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE')]
+                                           upd.long <- reshape(upd,  
+                                                               idvar = c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),
+                                                               direction = 'long', varying = varLong, v.names = 'value', timevar = 'variable', times = varLong)
+                                           upd.long <- subset(upd.long, value!='' & value!='NA')
+                                           upd.long$variable <- with(upd.long, paste(LINE, variable, sep='_'))
+                                           upd.long$value <- with(upd.long, str_trim(value))
+                                           upd.long$value <- with(upd.long, ifelse(str_detect(variable,'NAME_COM|INTRODUCED|HYBRID'),toupper(value),value))
+                                           upd.long <- subset(upd.long, select = -LINE)
+
+                                           upd.wide <- reshape(upd.long, idvar = c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE'),
+                                                                   direction = 'wide', v.names = 'value', timevar = 'variable')
+                                           names(upd.wide) <- gsub('value\\.', '', names(upd.wide))
+                                           upd.wide$SAMPLE_TYPE <- NULL
+                                           
+                                           # updData.wide <- subset(vals_fish$Data, select=-PAGE) %>%
+                                           #   # subset(NAME_COM!='' & !is.na(NAME_COM)) %>% # Do not need to explicitly remove these because we cannot completely remove data
+                                           #   melt(id.vars=c('UID','SITE_ID','VISIT_NO','YEAR','STUDYNAME','APP_PLATFORM','APP_VERSION','SAMPLE_TYPE','LINE'),na.rm=TRUE) %>%
+                                           #   subset(value!='' & value!='NA') %>%
+                                           #   mutate(variable=paste(LINE,variable,sep='_'),value=ifelse(value %in% c(' '),'',value)) %>%
+                                           #   mutate(value=ifelse(str_detect(variable,'NAME_COM|INTRODUCED|HYBRID'),toupper(value),value)) %>%
+                                           #   subset(select=-LINE) %>%
+                                           #   dcast(UID+SITE_ID+VISIT_NO+YEAR+STUDYNAME+APP_PLATFORM+APP_VERSION+SAMPLE_TYPE~variable, value.var='value') %>%
+                                           #   subset(select=-SAMPLE_TYPE)
+                                           
+                                           formatData <- list(UID=unique(upd.wide$UID),SITE_ID=unique(upd.wide$SITE_ID),
+                                                              VISIT_NO=unique(upd.wide$VISIT_NO),YEAR=unique(upd.wide$YEAR),
+                                                              STUDYNAME=unique(upd.wide$STUDYNAME),APP_PLATFORM=unique(upd.wide$APP_PLATFORM),
+                                                              APP_VERSION=unique(upd.wide$APP_VERSION),FISH=unbox(upd.wide[,8:length(upd.wide)]))
                                            
                                            jsonData <- jsonlite::write_json(formatData,auto_unbox=TRUE,prettify=TRUE,file) 
                                            

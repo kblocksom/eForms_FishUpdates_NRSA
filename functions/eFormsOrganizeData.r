@@ -24,39 +24,53 @@ eFormsOrganize <- function(rawData){
 #############################################################################################################
 # This begins the section which organizes the parsed data by sample type
 organizeFish <- function(parsedIn){
-  # Start by separating data that describe samples and those that describe species
-  # aa pulls out sample information by SAMPLE_TYPE and sets LINE=0
-  # aa <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:alpha:]')) %>%
-  #   mutate(PAGE='1', LINE='0') %>%
-  #   melt(id.vars=c('PAGE','LINE'), variable.name='PARAMETER', value.name='RESULT') %>%
-  #   mutate(SAMPLE_TYPE=substring(PARAMETER,6,9), 
-  #          PARAMETER=gsub('FISH\\.VERT\\_|FISH\\.FTIS\\_|FISH\\.FPLG\\_|FISH\\.FISH_', '', PARAMETER)) %>%
+ # pulls out and formats species by line number and sample type
+  aa <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:digit:]'))
+  aa$PAGE <- '1'
+  
+  varLong <- names(aa)[names(aa) %nin% c('PAGE')]
+  bb <- reshape(aa, idvar = c('PAGE'), direction = 'long', varying = varLong,
+                times = varLong, v.names = 'RESULT', timevar = 'variable')
+  bb$variable <- with(bb, gsub('FISH\\.','',variable))
+  bb$LINE <- with(bb, str_extract(variable, '[:digit:]+'))
+  bb$SAMPLE_TYPE <- with(bb, ifelse(str_detect(variable,'FTIS'),'FTIS',
+                                    ifelse(str_detect(variable,'FPLG'),'FPLG','FISH')))
+  bb$PARAMETER <- with(bb, ifelse(SAMPLE_TYPE %in% c('FTIS','FPLG'),str_replace(variable,'[:digit:]+\\_FTIS\\_|[:digit:]+\\_FPLG\\_', ''),
+                                  str_replace(variable, '[:digit:]+\\_', '')))
+  
+  cc <- subset(bb, SAMPLE_TYPE == 'FISH', select = c('SAMPLE_TYPE','PAGE','LINE','PARAMETER','RESULT'))
+    
+  # bb <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:digit:]')) %>%
+  #   mutate(PAGE='1') %>%
+  #   melt(id.vars='PAGE',value.name='RESULT') %>%
+  #   mutate(variable = gsub('FISH\\.','',variable),
+  #          LINE=str_extract(variable, '[:digit:]+'),
+  #          SAMPLE_TYPE=ifelse(str_detect(variable,'FTIS'),'FTIS',
+  #                             ifelse(str_detect(variable,'FPLG'),'FPLG','FISH'))) %>%
+  #   mutate(PARAMETER=ifelse(SAMPLE_TYPE %in% c('FTIS','FPLG'),str_replace(variable,'[:digit:]+\\_FTIS\\_|[:digit:]+\\_FPLG\\_', ''),
+  #                           str_replace(variable, '[:digit:]+\\_', ''))) %>%
   #   select(SAMPLE_TYPE, PAGE, LINE, PARAMETER, RESULT) %>%
   #   filter(SAMPLE_TYPE=='FISH')
-  # bb pulls out and formats species by line number and sample type
-  bb <- subset(parsedIn, select=str_detect(names(parsedIn), 'FISH\\.[:digit:]')) %>%
-    mutate(PAGE='1') %>%
-    melt(id.vars='PAGE',value.name='RESULT') %>%
-    mutate(variable = gsub('FISH\\.','',variable),
-           LINE=str_extract(variable, '[:digit:]+'),
-           SAMPLE_TYPE=ifelse(str_detect(variable,'FTIS'),'FTIS',
-                              ifelse(str_detect(variable,'FPLG'),'FPLG','FISH'))) %>%
-    mutate(PARAMETER=ifelse(SAMPLE_TYPE %in% c('FTIS','FPLG'),str_replace(variable,'[:digit:]+\\_FTIS\\_|[:digit:]+\\_FPLG\\_', ''),
-                            str_replace(variable, '[:digit:]+\\_', ''))) %>%
-    select(SAMPLE_TYPE, PAGE, LINE, PARAMETER, RESULT) %>%
-    filter(SAMPLE_TYPE=='FISH')
   # stack aa and bb on top of one another
-  cc <- bb
+  # cc <- bb
   # cast into wide format for review
-  cc.wide <- dcast(cc,SAMPLE_TYPE+PAGE+LINE~PARAMETER,value.var='RESULT') %>%
-    arrange(PAGE,as.numeric(LINE))
+  cc.wide <- reshape(cc, idvar = c('SAMPLE_TYPE','PAGE','LINE'), direction = 'wide',
+                     v.names = 'RESULT', timevar = 'PARAMETER')
+  names(cc.wide) <- gsub('RESULT\\.', '', names(cc.wide))
+  
+  cc.wide <- cc.wide[order(cc.wide$PAGE, as.numeric(cc.wide$LINE)),]
+  
+  # cc.wide <- dcast(cc,SAMPLE_TYPE+PAGE+LINE~PARAMETER,value.var='RESULT') %>%
+  #   arrange(PAGE,as.numeric(LINE))
   
   nameList <- data.frame(varName=c('SAMPLE_TYPE','PAGE','LINE','NAME_COM','INTRODUCED','HYBRID','COUNT_6','COUNT_12','COUNT_18','COUNT_19','ANOM_COUNT','MORT_CT','VOUCH_UNK','VOUCH_QA','VOUCH_PHOTO','VOUCH_NUM','SEQUENCE','TAG','FISH_COMMENT','PHOTO_COMMENT'), varOrder=seq(1,20),stringsAsFactors = F)
   
-  subList <- filter(nameList,varName %in% names(cc.wide)) %>%
-    arrange(varOrder)
+  subList <- subset(nameList, varName %in% names(cc.wide))
+  subList <- subList[order(subList$varOrder),]
+  # subList <- filter(nameList,varName %in% names(cc.wide)) %>%
+  #   arrange(varOrder)
   
-  cc.wide <- cc.wide[,subList$varName] 
+  cc.wide <- cc.wide[, subList$varName] 
   
   return(cc.wide)
 }
